@@ -1,0 +1,133 @@
+{% extends 'layouts/blank.html' %}
+
+{% block content %}
+
+<wrapper class="block max-w-2xl mx-auto my-10 px-6">
+    <div id="chat_window" class="h-[45rem] flex flex-col bg-gray-800 rounded-2xl shadow-2xl relative p-1">
+
+        <!-- Online users -->
+        <div class="flex justify-center text-emerald-400 bg-gray-800 p-2 sticky top-0 z-10">
+            {% if other_user %}
+            <a href="{% url 'profile' other_user.username %}">
+                <div class="flex items-center gap-2 p-4 sticky top-0 z-10">
+                    <img class="w-10 h-10 rounded-full object-cover" src="{{ other_user.profile.avatar }}" />
+                    <div>
+                        <span class="font-bold text-white">{{ other_user.profile.name }}</span> 
+                        <span class="text-sm font-light text-gray-400">@{{ other_user.username }}</span>
+                    </div>
+                </div>
+            </a>
+            {% else %}
+            <div id='online-icon' ></div>
+            <span id="online-count" class="pr-1"></span> online
+            {% endif %}
+            
+        </div>
+
+        <!-- Messages -->
+        <div id="chat_container" class="overflow-y-auto grow">
+            <ul id="chat_messages" class="flex flex-col justify-end gap-2 p-4">
+
+                {% for message in chat_messages reversed %}
+                    {% include "a_rtchat/chat_message.html" %}
+                {% endfor %}
+
+            </ul>
+        </div>
+
+        <!-- Input -->
+        <div class="sticky bottom-0 z-10 p-2 bg-gray-800">
+            <div class="flex items-center rounded-xl px-2 py-2">
+
+                <form id="chat_message_form" class="w-full"
+                      hx-ext="ws"
+                      ws-connect="/ws/chatroom/{{chatroom_name}}"
+                      ws-send>
+                    {% csrf_token %}
+                    {{ form }}
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</wrapper>
+
+
+{% endblock %}
+
+{% block javascript %}
+
+<!-- ===================== SCRIPTS ===================== -->
+
+<script>
+function scrollToBottom() {
+    const container = document.getElementById("chat_container");
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
+}
+
+/* Scroll on initial load */
+document.addEventListener("DOMContentLoaded", function () {
+    scrollToBottom();
+});
+</script>
+
+<script>
+/* Handle HTMX request lifecycle */
+document.body.addEventListener("htmx:afterRequest", function (event) {
+
+    const form = document.getElementById("chat_message_form");
+    if (!form) return;
+
+    /* Clear inputs */
+    form.querySelectorAll("input, textarea").forEach(el => {
+        el.value = "";
+    });
+
+    /* Focus input again */
+    const input = form.querySelector("input, textarea");
+    if (input) input.focus();
+
+    /* Scroll after message is added */
+    setTimeout(scrollToBottom, 50);
+});
+</script>
+
+<script>
+/* Extra safety: ensure scroll after DOM updates */
+document.body.addEventListener("htmx:afterSwap", function (event) {
+    if (event.target.id === "chat_messages") {
+        scrollToBottom();
+    }
+});
+</script>
+
+<script>
+document.body.addEventListener("htmx:wsAfterSend", function (event) {
+
+    const form = document.getElementById("chat_message_form");
+    if (!form) return;
+
+    // clear input(s)
+    form.querySelectorAll("input, textarea").forEach(el => {
+        el.value = "";
+    });
+
+    // refocus input
+    const input = form.querySelector("input, textarea");
+    if (input) input.focus();
+
+    // scroll to bottom
+    const container = document.getElementById("chat_container");
+    if (container) {
+        setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+        }, 50);
+    }
+});
+</script>
+
+{% endblock javascript %}
