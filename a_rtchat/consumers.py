@@ -84,6 +84,7 @@ class ChatRoomConsumer(WebsocketConsumer):
         
         context = {
             'online_count':online_count,
+            'chat_group':self.chatroom,
         }
         
         html = render_to_string('a_rtchat/partials/online_count.html' , context)

@@ -2,7 +2,7 @@
 
                 <li class="flex justify-end mb-4">
                     <div class="bg-green-200 rounded-l-lg rounded-tr-lg p-4 max-w-[75%]">
-                        <span>{{message.body}}</span>
+                        {% include "a_rtchat/partials/message_content.html" %}
                     </div>
                     <div class="flex items-end">
                         <svg height="13" width="8" >
@@ -24,7 +24,7 @@
                             </svg>
                         </div>
                         <div class="bg-white p-4 max-w-[75%] rounded-r-lg rounded-tl-lg">
-                            <span>{{message.body}}</span>
+                            {% include "a_rtchat/partials/message_content.html" %}
                         </div>  
                     </div>
                     <div class="text-sm font-light py-1 ml-10">
@@ -33,3 +33,33 @@
                     </div>
                 </li>
                 {% endif %}
+
+{% block javascript %}
+
+<script>
+function scrollToBottom() {
+    const container = document.getElementById("chat_container");
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
+}
+
+// for HTMX / dynamic updates
+document.body.addEventListener("htmx:afterSwap", function(event) {
+    if (event.target.id === "chat_container") {
+        setTimeout(scrollToBottom, 50);
+    }
+});
+</script>
+
+
+
+
+{% endblock javascript %}
+
+
+
+
+
+
+
